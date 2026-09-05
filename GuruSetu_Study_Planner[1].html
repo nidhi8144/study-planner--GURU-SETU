@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>GuruSetu — Smart Study Planner</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#f5f7fb;color:#172033}
+header{background:linear-gradient(135deg,#17173d,#5b5bd6);color:#fff;padding:28px 18px}
+.wrap{max-width:1050px;margin:auto}.head{display:flex;justify-content:space-between;gap:15px;align-items:center}.head h1{margin:0;font-size:30px}.head p{margin:5px 0 0;opacity:.85}
+.badge{border:1px solid #ffffff55;border-radius:30px;padding:8px 12px;font-size:12px}
+main{padding:22px 16px}.grid{display:grid;grid-template-columns:320px 1fr;gap:18px}
+.card{background:white;border:1px solid #e4e7ec;border-radius:16px;padding:19px;box-shadow:0 5px 18px #1018280d;margin-bottom:18px}
+h2{font-size:19px;margin:0 0 14px}label{display:block;font-size:13px;font-weight:bold;margin:13px 0 6px}
+input,select{width:100%;padding:11px;border:1px solid #d0d5dd;border-radius:9px;font-size:14px}
+button{border:0;border-radius:9px;padding:11px 14px;font-weight:bold;cursor:pointer}
+.primary{background:#5b5bd6;color:white;width:100%;margin-top:15px}.secondary{background:#eef0ff;color:#4545a8}.danger{background:#fff0ee;color:#d92d20}
+.actions{display:flex;gap:8px;margin-top:9px}.actions button{flex:1}
+.focus{background:#f0f0ff;border:1px solid #d8d8ff;border-radius:11px;padding:13px;margin-bottom:15px}
+.focus strong{display:block;color:#4545a8;margin-bottom:3px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.stat{text-align:center;border:1px solid #e4e7ec;border-radius:10px;padding:12px}.stat b{display:block;font-size:23px}.stat span{font-size:12px;color:#667085}
+.progress{height:11px;background:#eaecf0;border-radius:20px;margin:15px 0 20px;overflow:hidden}.bar{height:100%;width:0;background:#5b5bd6;transition:.3s}
+.day{display:grid;grid-template-columns:48px 1fr 42px;gap:12px;align-items:center;border:1px solid #e4e7ec;border-radius:11px;padding:12px;margin-top:9px}
+.num{width:42px;height:42px;border-radius:50%;background:#eef0ff;color:#4545a8;display:flex;align-items:center;justify-content:center;font-weight:bold}
+.day h3{font-size:15px;margin:0}.day p{font-size:12px;color:#667085;margin:3px 0 0}.check{background:#f2f4f7;color:#344054;width:42px;height:38px;padding:0}.done{background:#f0fff7;border-color:#b7ebd0}.done .num{background:#dff8eb;color:#087443}.done .check{background:#12b76a;color:#fff}
+.task{display:flex;gap:9px;align-items:center;border-bottom:1px solid #e4e7ec;padding:10px 0}.task:last-child{border:0}.task input{width:auto}.task span{flex:1}.task.done span{text-decoration:line-through;color:#98a2b3}.empty{color:#667085;font-size:14px}
+footer{text-align:center;color:#667085;font-size:12px;padding:5px 18px 25px}
+@media(max-width:760px){.grid{grid-template-columns:1fr}.head{flex-direction:column;align-items:flex-start}.stats{grid-template-columns:repeat(3,1fr)}}
+</style>
+</head>
+<body>
+<header><div class="wrap head"><div><h1>GuruSetu</h1><p>Learn. Practice. Improve.</p></div><div class="badge">SarlaYash Teachers’ Day Hackathon 2026</div></div></header>
+<main class="wrap">
+<div class="grid">
+<aside>
+<div class="card">
+<h2>Build Your Study Plan</h2>
+<label>Learning Goal</label><input id="goal" placeholder="e.g. Prepare for BPSC Prelims">
+<label>Main Subject</label><select id="subject"><option>Polity</option><option>History</option><option>Geography</option><option>Economy</option><option>Environment</option><option>Current Affairs</option><option>Science & Technology</option></select>
+<label>Daily Study Hours</label><input id="hours" type="number" min="1" max="16" value="6">
+<label>Weak Area</label><input id="weak" placeholder="e.g. Fundamental Rights">
+<button class="primary" onclick="generate()">Generate 7-Day Plan</button>
+<div class="actions"><button class="secondary" onclick="demo()">Demo Data</button><button class="danger" onclick="resetApp()">Reset</button></div>
+</div>
+<div class="card"><h2>Add Custom Task</h2><input id="task" placeholder="e.g. Revise Article 14–18"><button class="primary" onclick="addTask()">Add Task</button></div>
+</aside>
+<section>
+<div class="card">
+<div class="focus"><strong>Today’s Focus</strong><span id="focus">Generate your plan to see today’s focus.</span></div>
+<div class="stats"><div class="stat"><b id="doneCount">0</b><span>Days Done</span></div><div class="stat"><b id="hoursTotal">0</b><span>Planned Hours</span></div><div class="stat"><b id="pct">0%</b><span>Progress</span></div></div>
+<div class="progress"><div class="bar" id="bar"></div></div>
+<h2>7-Day Learning Roadmap</h2><div id="plan"><div class="empty">Enter your goal and click “Generate 7-Day Plan”.</div></div>
+</div>
+<div class="card"><h2>My Tasks</h2><div id="tasks"><div class="empty">No custom tasks yet.</div></div></div>
+</section>
+</div>
+</main>
+<footer>GuruSetu • Offline browser prototype • Your data stays in this browser</footer>
+<script>
+const KEY="gurusetu_working_v1";
+let s=JSON.parse(localStorage.getItem(KEY)||"null")||{goal:"",subject:"Polity",hours:6,weak:"",plan:[],tasks:[]};
+const t=[["Foundation","Learn core concepts and make short notes."],["Concept Building","Connect concepts with examples."],["Active Recall","Recall key facts without looking at notes."],["Practice","Solve topic-wise MCQs and review mistakes."],["Weak Area","Focus deeply on the selected weak area."],["Revision","Revise short notes and previous mistakes."],["Test & Reflect","Take a mini test and analyse errors."]];
+function save(){localStorage.setItem(KEY,JSON.stringify(s))}
+function esc(x){return String(x).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function generate(){
+ s.goal=document.getElementById("goal").value.trim()||"Exam Preparation";s.subject=document.getElementById("subject").value;s.hours=Math.max(1,Math.min(16,+document.getElementById("hours").value||6));s.weak=document.getElementById("weak").value.trim()||"Your weakest topic";
+ s.plan=t.map((x,i)=>({day:i+1,title:x[0],detail:x[1],focus:i===4?s.weak+" — targeted revision and practice":s.subject+" — "+x[0],hours:Math.max(1,Math.round(s.hours/2)),done:false}));save();render()
+}
+function render(){
+ goal.value=s.goal;subject.value=s.subject;hours.value=s.hours;weak.value=s.weak;renderPlan();renderTasks();stats()
+}
+function renderPlan(){
+ if(!s.plan.length){plan.innerHTML='<div class="empty">Enter your goal and click “Generate 7-Day Plan”.</div>';focus.textContent="Generate your plan to see today’s focus.";return}
+ plan.innerHTML=s.plan.map((d,i)=>'<div class="day '+(d.done?"done":"")+'"><div class="num">'+d.day+'</div><div><h3>Day '+d.day+": "+esc(d.title)+'</h3><p>'+esc(d.focus)+" • "+d.hours+' hour'+(d.hours>1?"s":"")+'</p><p>'+esc(d.detail)+'</p></div><button class="check" onclick="toggleDay('+i+')">'+(d.done?"✓":"○")+'</button></div>').join("");
+ let n=s.plan.find(x=>!x.done);focus.textContent=n?"Day "+n.day+": "+n.focus:"All 7 days completed. Great work!";
+}
+function toggleDay(i){s.plan[i].done=!s.plan[i].done;save();render()}
+function addTask(){let v=task.value.trim();if(!v)return;s.tasks.push({text:v,done:false});task.value="";save();renderTasks()}
+function toggleTask(i){s.tasks[i].done=!s.tasks[i].done;save();renderTasks()}
+function delTask(i){s.tasks.splice(i,1);save();renderTasks()}
+function renderTasks(){tasks.innerHTML=s.tasks.length?s.tasks.map((x,i)=>'<div class="task '+(x.done?"done":"")+'"><input type="checkbox" '+(x.done?"checked":"")+' onchange="toggleTask('+i+')"><span>'+esc(x.text)+'</span><button class="danger" onclick="delTask('+i+')">Delete</button></div>').join(""):'<div class="empty">No custom tasks yet.</div>'}
+function stats(){let d=s.plan.filter(x=>x.done).length,total=s.plan.reduce((a,x)=>a+x.hours,0),p=s.plan.length?Math.round(d/s.plan.length*100):0;doneCount.textContent=d;hoursTotal.textContent=total;pct.textContent=p+"%";bar.style.width=p+"%"}
+function demo(){goal.value="BPSC / UPSC Foundation Preparation";subject.value="Polity";hours.value=6;weak.value="Fundamental Rights";generate();s.tasks=[{text:"Revise important Articles",done:false},{text:"Solve 20 Polity MCQs",done:false},{text:"Review today's mistakes",done:true}];save();render()}
+function resetApp(){if(confirm("Reset all GuruSetu data?")){s={goal:"",subject:"Polity",hours:6,weak:"",plan:[],tasks:[]};save();render()}}
+task.addEventListener("keydown",e=>{if(e.key==="Enter")addTask()});render();
+</script>
+</body>
+</html>
